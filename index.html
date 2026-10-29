@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#11171b">
+  <title>Apollo CM-107 · Capsule Simulator</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2311171b'/%3E%3Cpath d='M12 5h8l7 21H5z' fill='%23d8d2bd'/%3E%3Ccircle cx='16' cy='20' r='3' fill='%23e66b36'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <svg class="svg-defs" aria-hidden="true">
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 5h4v14H7zm6 0h4v14h-4z"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4.7 7.7A9 9 0 1 1 3 13h2a7 7 0 1 0 1.5-4.3L9 11H3V5z"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><path d="M11 10h2v8h-2zm0-4h2v2h-2z"/><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5v2H6v3zm11-5h5v5h-2V6h-3zM6 15v3h3v2H4v-5zm12 0h2v5h-5v-2h3z"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 7h3l1.5-2h7L17 7h3v12H4zm8 3a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 4h8l10 10-7 7L3 10zm4 3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3"/></symbol>
+    <symbol id="i-orbit" viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="4.5" fill="none" stroke="currentColor" stroke-width="1.6" transform="rotate(-30 12 12)"/><circle cx="12" cy="12" r="2.5"/></symbol>
+    <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M2 13h4l2-6 4 11 3-8 2 3h5v-2h-4l-2-3-3 8-4-11-3 6H2z"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-checklist" viewBox="0 0 24 24"><path d="M9 5h11v14H9zM4 5h2v2H4zm0 4h2v2H4zm0 4h2v2H4zm0 4h2v2H4zM12 9h5v2h-5zm0 4h5v2h-5z"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M4 4h13l3 3v13H4zm4 0v6h8V4zm0 11v5h8v-5z"/></symbol>
+  </svg>
+
+  <main id="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mission-mark" aria-hidden="true"><span>11</span></div>
+        <div><strong>APOLLO</strong><span>COMMAND MODULE · CM-107</span></div>
+      </div>
+      <div class="sim-title"><span class="live-dot"></span>EARTH RETURN SIMULATOR</div>
+      <div class="top-actions">
+        <button id="panel-toggle" class="icon-button mobile-only" aria-label="Toggle telemetry panel" title="Telemetry"><svg><use href="#i-pulse"/></svg></button>
+        <button id="checklist-toggle" class="text-button" aria-pressed="false"><svg><use href="#i-checklist"/></svg><span>CHECKLIST</span></button>
+        <button id="about-button" class="text-button"><svg><use href="#i-info"/></svg><span>MODEL DATA</span></button>
+        <button id="fullscreen-button" class="icon-button" aria-label="Toggle fullscreen" title="Fullscreen"><svg><use href="#i-expand"/></svg></button>
+      </div>
+    </header>
+
+    <section id="viewport" aria-label="Interactive 3D Apollo Command Module. Drag to orbit and scroll to zoom.">
+      <div class="boot-poster" id="boot-poster" aria-hidden="true"><div class="boot-capsule"></div></div>
+      <div id="loading" class="loading-pill"><span></span>LOADING CM-107 SCAN</div>
+      <div id="hotspots" class="hotspots"></div>
+      <div class="view-badge"><span id="view-badge-text">EXTERIOR</span><small>SMITHSONIAN SCAN · 1 UNIT = 1 M</small></div>
+      <div class="orientation-gizmo" aria-hidden="true"><span class="axis-y">Y</span><span class="axis-x">X</span><i></i></div>
+      <div id="event-banner" class="event-banner"><small>FLIGHT PHASE</small><strong id="event-title">TRANS-EARTH COAST</strong><span id="event-subtitle">Command module in free flight</span></div>
+      <span id="replay-state" class="replay-state" role="status"></span>
+    </section>
+
+    <aside class="phase-rail" aria-label="Mission phases">
+      <div class="rail-heading">MISSION SEQUENCE</div>
+      <button class="phase-button" data-phase="launch"><span>01</span><div><strong>LAUNCH</strong><small>Escape configuration</small></div><i></i></button>
+      <button class="phase-button active" data-phase="coast"><span>02</span><div><strong>COAST</strong><small>Trans-Earth injection</small></div><i></i></button>
+      <button class="phase-button" data-phase="entry"><span>03</span><div><strong>ENTRY</strong><small>Atmospheric interface</small></div><i></i></button>
+      <button class="phase-button" data-phase="drogue"><span>04</span><div><strong>DROGUES</strong><small>Stabilize &amp; slow</small></div><i></i></button>
+      <button class="phase-button" data-phase="mains"><span>05</span><div><strong>MAIN CHUTES</strong><small>Three ringsails</small></div><i></i></button>
+      <button class="phase-button" data-phase="splash"><span>06</span><div><strong>SPLASHDOWN</strong><small>Pacific recovery</small></div><i></i></button>
+      <div class="rail-footer"><span>APOLLO 11</span><small>16–24 JUL 1969</small></div>
+    </aside>
+
+    <aside id="telemetry-panel" class="telemetry-panel">
+      <div class="panel-section">
+        <div class="section-label">DISPLAY MODE</div>
+        <div class="segment-control" role="group" aria-label="Display mode">
+          <button class="active" data-view="exterior">EXTERIOR</button>
+          <button data-view="xray">X-RAY</button>
+          <button data-view="systems">SYSTEMS</button>
+        </div>
+      </div>
+      <div class="panel-section component-section">
+        <div class="section-label">SELECTED COMPONENT</div>
+        <h2 id="component-name">COMMAND MODULE</h2>
+        <p id="component-description">The only Apollo spacecraft section to return to Earth. CM-107 <em>Columbia</em> carried Armstrong, Aldrin and Collins home in July 1969.</p>
+        <dl class="spec-grid" id="spec-grid">
+          <div><dt>BASE Ø</dt><dd>3.91 m</dd></div>
+          <div><dt>HEIGHT</dt><dd>3.48 m</dd></div>
+          <div><dt>CREW</dt><dd>3</dd></div>
+          <div><dt>LAUNCH MASS</dt><dd>5,560 kg</dd></div>
+        </dl>
+      </div>
+      <div class="panel-section telemetry-section">
+        <div class="section-label">FLIGHT TELEMETRY <span>REPRESENTATIVE</span></div>
+        <div class="telemetry-primary"><span id="telemetry-value">10.8</span><small id="telemetry-unit">km/s</small><label id="telemetry-label">INERTIAL VELOCITY</label></div>
+        <div class="telemetry-grid">
+          <div><small id="altitude-label">EARTH RANGE</small><strong id="altitude-value">184,000</strong><span id="altitude-unit">km</span></div>
+          <div><small>HEAT SHIELD</small><strong id="temp-value">20</strong><span>°C</span></div>
+          <div><small>LOAD FACTOR</small><strong id="g-value">0.0</strong><span>g</span></div>
+        </div>
+      </div>
+      <div class="panel-section utility-controls">
+        <button id="rcs-button" class="utility-button"><svg><use href="#i-pulse"/></svg><span>RCS PULSE</span><kbd>R</kbd></button>
+        <button id="labels-button" class="utility-button active" aria-pressed="true"><svg><use href="#i-tag"/></svg><span>CALLOUTS</span><kbd>L</kbd></button>
+      </div>
+    </aside>
+
+    <aside id="checklist-panel" class="checklist-panel" aria-label="Mission checklist and session controls">
+      <div class="checklist-head">
+        <div><small>GUIDED PROCEDURE</small><h2>MISSION CHECKLIST</h2></div>
+        <button id="checklist-close" class="icon-button" aria-label="Close checklist"><svg><use href="#i-close"/></svg></button>
+      </div>
+      <label class="checklist-guide-label">GUIDE<select id="checklist-select" aria-label="Checklist guide"></select></label>
+      <p id="checklist-description" class="checklist-description"></p>
+      <div class="checklist-progress"><span id="checklist-progress-label">0 / 0</span><i><b id="checklist-progress-bar"></b></i></div>
+      <ol id="checklist-steps" class="checklist-steps"></ol>
+      <div class="checklist-current">
+        <p id="checklist-detail"></p>
+        <div class="checklist-actions">
+          <button id="checklist-continue">CONTINUE <kbd>N</kbd></button>
+          <button id="checklist-locate">LOCATE CONTROL</button>
+        </div>
+      </div>
+      <div class="session-controls">
+        <div class="section-label">DETERMINISTIC SESSION <span>LOCAL ONLY</span></div>
+        <div class="session-buttons">
+          <button id="save-checkpoint"><svg><use href="#i-save"/></svg>SAVE <kbd>F5</kbd></button>
+          <button id="load-checkpoint">LOAD <kbd>F9</kbd></button>
+          <button id="replay-checkpoint">REPLAY</button>
+        </div>
+        <p id="checkpoint-status">No checkpoint saved in this browser.</p>
+        <small>Checkpoints and command logs stay in this browser’s localStorage. They do not sync across devices.</small>
+      </div>
+    </aside>
+
+    <div class="camera-tools" role="group" aria-label="Camera controls">
+      <button id="camera-reset"><svg><use href="#i-camera"/></svg><span>RESET VIEW</span></button>
+      <button id="rotate-button" aria-pressed="false"><svg><use href="#i-orbit"/></svg><span>AUTO ORBIT</span></button>
+      <span class="control-hint">DRAG TO ORBIT · SCROLL TO ZOOM</span>
+    </div>
+
+    <footer class="playback-bar">
+      <button id="play-button" class="play-button" aria-label="Pause simulation"><svg><use href="#i-pause"/></svg></button>
+      <button id="restart-button" class="icon-button" aria-label="Restart current phase" title="Restart phase"><svg><use href="#i-reset"/></svg></button>
+      <div class="timecode"><strong id="time-current">00:00</strong><span>/ 00:12</span></div>
+      <div class="timeline-wrap">
+        <div class="timeline-labels"><span id="timeline-phase">TRANS-EARTH COAST</span><span>TIME COMPRESSED</span></div>
+        <input id="timeline" type="range" min="0" max="1200" value="0" step="1" aria-label="Mission phase timeline">
+        <div class="timeline-ticks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <label class="speed-control">RATE<select id="speed-select" aria-label="Playback speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+      <div id="render-stats" class="render-stats">— FPS</div>
+    </footer>
+  </main>
+
+  <dialog id="about-dialog" aria-labelledby="about-title">
+    <div class="dialog-head"><div><small>MODEL DATA / SOURCES</small><h2 id="about-title">APOLLO 11 · COLUMBIA</h2></div><button id="about-close" class="icon-button" aria-label="Close model data"><svg><use href="#i-close"/></svg></button></div>
+    <p>The exterior is a public-domain 3D documentation scan of Command Module CM-107 from the Smithsonian National Air and Space Museum. The optimized model retains the flown artifact’s weathered surface and open-hatch museum configuration.</p>
+    <div class="source-row"><span>GEOMETRY</span><strong>Smithsonian Institution · CC0</strong></div>
+    <div class="source-row"><span>REFERENCE</span><a href="https://3d.si.edu/object/3d/command-module-apollo-11%3Ad8c63e8a-4ebc-11ea-b77f-2e728ce88125" target="_blank" rel="noreferrer">Smithsonian 3D record ↗</a></div>
+    <div class="source-row"><span>MODEL SCALE</span><strong>Meters · 3.91 m base diameter</strong></div>
+    <section class="parameter-section" aria-labelledby="parameter-title">
+      <div class="parameter-head"><div><small>PROVENANCE REGISTRY</small><h3 id="parameter-title">PARAMETER CONFIDENCE</h3></div><select id="parameter-filter" aria-label="Filter parameters by confidence"><option value="all">ALL</option><option value="sourced">SOURCED</option><option value="derived">DERIVED</option><option value="estimated">ESTIMATED</option></select></div>
+      <p>Confidence records provenance, not precision. Estimated presentation values remain explicitly labeled until backed by a document locator.</p>
+      <div id="parameter-table" class="parameter-table"></div>
+    </section>
+    <p class="accuracy-note"><strong>Accuracy note.</strong> The capsule exterior is scan-based. The cabin X-ray, launch escape assembly, RCS plumes, parachutes, telemetry and mission motion are educational reconstructions, not an engineering digital twin or a flight-dynamics solver. Event timing is compressed.</p>
+    <div class="keyboard-help"><span><kbd>SPACE</kbd> Play / pause</span><span><kbd>1–6</kbd> Select phase</span><span><kbd>R</kbd> RCS pulse</span><span><kbd>L</kbd> Callouts</span><span><kbd>C</kbd> Checklist</span><span><kbd>N</kbd> Continue note</span><span><kbd>F5</kbd> Save checkpoint</span><span><kbd>F9</kbd> Load checkpoint</span></div>
+  </dialog>
+
+  <script type="module" src="./src/scene.js"></script>
+</body>
+</html>
