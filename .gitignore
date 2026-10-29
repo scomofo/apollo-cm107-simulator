@@ -1,0 +1,7 @@
+node_modules/
+dist/
+public/models/
+public/draco/
+feature-shots/
+test-shots/
+.DS_Store
