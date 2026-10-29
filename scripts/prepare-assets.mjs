@@ -21,6 +21,24 @@ async function validModel() {
   }
 }
 
+async function downloadModel() {
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const response = await fetch(modelUrl, { signal: AbortSignal.timeout(300000) });
+      if (!response.ok) throw new Error(`Smithsonian model download failed: HTTP ${response.status}`);
+      const data = Buffer.from(await response.arrayBuffer());
+      if (hash(data) !== modelSha256) {
+        throw new Error('Smithsonian model checksum mismatch; refusing to use the downloaded asset');
+      }
+      return data;
+    } catch (error) {
+      if (attempt === 3) throw error;
+      console.log(`Apollo CM-107 model: attempt ${attempt} failed; retrying…`);
+    }
+  }
+  throw new Error('Unreachable model download state');
+}
+
 async function prepareModel() {
   if (await validModel()) {
     console.log('Apollo CM-107 model: verified local asset');
@@ -28,13 +46,7 @@ async function prepareModel() {
   }
 
   console.log('Apollo CM-107 model: downloading Smithsonian CC0 asset…');
-  const response = await fetch(modelUrl, { signal: AbortSignal.timeout(180000) });
-  if (!response.ok) throw new Error(`Smithsonian model download failed: HTTP ${response.status}`);
-  const data = Buffer.from(await response.arrayBuffer());
-  if (hash(data) !== modelSha256) {
-    throw new Error('Smithsonian model checksum mismatch; refusing to use the downloaded asset');
-  }
-
+  const data = await downloadModel();
   await mkdir(path.dirname(modelPath), { recursive: true });
   const temporary = `${modelPath}.download`;
   await writeFile(temporary, data);
